@@ -8,13 +8,13 @@ dir.create("output")
 rm(list = ls())
 # function
 
-pathway_pdf=function(Meta_data=Meta_data,meta_col=meta_col,out.name=out.name,height=height,padj=NULL,pvalue=NULL,width=width){
+pathway_pdf=function(Meta_data=Meta_data,meta_col=meta_col,out.name=out.name,height=height,padj=NULL,pvalue=NULL,TopN=NULL,width=width){
   
   ####args
   # The rowname of Meta_data is sampleID;
   # the column of Meta_data is Features;
   # the first column of Meta_data is Groups;
-
+  
   ###
   DF <-  Meta_data %>% dplyr::select(meta_col, everything())
   DF_features_col<-colnames(DF)[-c(1:length(meta_col))]
@@ -95,13 +95,19 @@ pathway_pdf=function(Meta_data=Meta_data,meta_col=meta_col,out.name=out.name,hei
       print("Use:padj")
       diff.sig <- subset(diff, p.adj <= pvalue)
       out.name=paste0(out.name,"padj0.05")
-      }else{
+    }else{
       print("Use:pvalue")
       diff.sig <- subset(diff, pvalue <= pvalue)
       out.name=paste0(out.name,"pvalue0.05")
-      }
+    }
     write.csv(diff,glue::glue("output/", out.name, comparison, "_wilcox.csv"))
-    diff.sig=diff.sig %>%dplyr::arrange(desc(log2FC))
+    if( is.null(TopN)  ){
+      print("TopN:NULL")
+      diff.sig=diff.sig %>%dplyr::arrange(desc(Log2fc))
+    }else{
+      print(glue::glue("TopN:",TopN) )
+      diff.sig=diff.sig %>%dplyr::arrange(desc(Log2fc)) %>% head(TopN) 
+    }
     
     if (nrow(diff.sig) != 0) {
       # Add color column based on mean difference sign
@@ -153,10 +159,10 @@ pathway_pdf=function(Meta_data=Meta_data,meta_col=meta_col,out.name=out.name,hei
         ) +
         coord_flip() +
         theme(legend.position = "top")
-      
+      color_value=c("deepskyblue", "darkorange")
       # Set custom fill colors
       p1 <-
-        p1 + scale_fill_manual(values = c("darkorange", "deepskyblue"))
+        p1 + scale_fill_manual(values =color_value )
       
       # Base plot for scatter plot
       p2 <- ggplot(diff.sig, aes(
@@ -194,7 +200,7 @@ pathway_pdf=function(Meta_data=Meta_data,meta_col=meta_col,out.name=out.name,hei
         coord_flip() +
         theme(legend.position = "none") +
         theme(axis.text.y = element_blank())
-      p2 <- p2 + scale_color_manual(values = c("darkorange", "deepskyblue"))
+      p2 <- p2 + scale_color_manual(values = color_value)
       
       p1 + p2
       
