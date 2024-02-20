@@ -1,5 +1,6 @@
 
 ##############################lefser
+##https://github.com/waldronlab/lefser/issues/16
 library(lefser)
 library(mia)
 pseq <- phyloseq::prune_taxa(taxa_sums(pseq) > 0, pseq)
